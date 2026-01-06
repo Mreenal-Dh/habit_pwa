@@ -1,5 +1,5 @@
-**Habit Tracker PWA
-**
+**Habit Tracker PWA**
+
 A minimal, offline-first habit tracker designed to help users build consistency without pressure.
 The app focuses on daily execution, goal-based habits, and streaks, presented through a calm, Notion-inspired interface.
 
