@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import {
   collection,
   query,
@@ -26,14 +26,17 @@ export default function EditTasks({ setScreen, goalId }) {
   const { user } = useAuth();
   const { refreshGoals, refreshHabits } = useContext(HabitContext);
 
-  useEffect(() => {
-    if (goalId && user) {
-      loadGoal();
-      loadHabits();
-    }
-  }, [goalId, user]);
+  const loadGoal = useCallback(async () => {
+    const toInputDate = (value) => {
+      if (!value) return "";
+      const date = value.toDate ? value.toDate() : new Date(value);
+      if (isNaN(date.getTime())) return "";
+      const year = date.getFullYear();
+      const month = `${date.getMonth() + 1}`.padStart(2, "0");
+      const day = `${date.getDate()}`.padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
 
-  async function loadGoal() {
     const goalSnap = await getDocs(
       query(
         collection(db, "goals"),
@@ -48,19 +51,9 @@ export default function EditTasks({ setScreen, goalId }) {
       setQuote(goalData.quote || "");
       setStartDate(goalData.startDate ? toInputDate(goalData.startDate) : "");
     }
-  }
+  }, [goalId, user]);
 
-  function toInputDate(value) {
-    if (!value) return "";
-    const date = value.toDate ? value.toDate() : new Date(value);
-    if (isNaN(date.getTime())) return "";
-    const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, "0");
-    const day = `${date.getDate()}`.padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
-  async function loadHabits() {
+  const loadHabits = useCallback(async () => {
     const q = query(
       collection(db, "habits"),
       where("goalId", "==", goalId),
@@ -68,7 +61,14 @@ export default function EditTasks({ setScreen, goalId }) {
     );
     const snap = await getDocs(q);
     setHabits(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-  }
+  }, [goalId, user]);
+
+  useEffect(() => {
+    if (goalId && user) {
+      loadGoal();
+      loadHabits();
+    }
+  }, [goalId, user, loadGoal, loadHabits]);
 
   async function toggleDay(day) {
     const updatedDays = goal.days.includes(day)

@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback, useMemo } from "react";
 import { HabitContext } from "../context/HabitContext";
 
 export default function MatrixCalendar({ goal, onDateSelect }) {
@@ -8,12 +8,6 @@ export default function MatrixCalendar({ goal, onDateSelect }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const { habits: allHabits, logs: allLogs } = useContext(HabitContext);
 
-  // Get current month date range (ISO strings)
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const dateRange = generateDateRange(firstDay, lastDay);
-
   function generateDateRange(start, end) {
     const dates = [];
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -22,13 +16,15 @@ export default function MatrixCalendar({ goal, onDateSelect }) {
     return dates;
   }
 
-  useEffect(() => {
-    if (goal?.id && allHabits.length > 0 && allLogs.length >= 0) {
-      loadCalendarData();
-    }
-  }, [goal?.id, allHabits, allLogs]);
+  // Memoize date range to prevent infinite updates
+  const dateRange = useMemo(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return generateDateRange(firstDay, lastDay);
+  }, []);
 
-  function loadCalendarData() {
+  const loadCalendarData = useCallback(() => {
     setLoading(true);
 
     // 1️⃣ Filter habits for this goal
@@ -52,7 +48,13 @@ export default function MatrixCalendar({ goal, onDateSelect }) {
     });
     setLogsMap(map);
     setLoading(false);
-  }
+  }, [goal, allHabits, allLogs, dateRange]);
+
+  useEffect(() => {
+    if (goal?.id && allHabits.length > 0 && allLogs.length >= 0) {
+      loadCalendarData();
+    }
+  }, [goal?.id, allHabits, allLogs, loadCalendarData]);
 
   if (loading) {
     return <p>Loading calendar...</p>;

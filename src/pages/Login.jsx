@@ -6,7 +6,7 @@ export default function Login() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (err) {
+    } catch {
       // Fallback for environments that block popups (e.g., in-app browsers / previews)
       await signInWithRedirect(auth, provider);
     }

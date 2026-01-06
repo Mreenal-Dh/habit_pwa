@@ -21,7 +21,6 @@ export default function GoalsCalendar({ setScreen, selectedGoal, setSelectedGoal
   const [showDayDialog, setShowDayDialog] = useState(false);
   const [dialogDate, setDialogDate] = useState(null);
 
-  const minSwipeDistance = 30;
   const swipeThreshold = 0.2; // 20% of container width
 
   const onTouchStart = (e) => {
@@ -100,7 +99,7 @@ export default function GoalsCalendar({ setScreen, selectedGoal, setSelectedGoal
         setCardIndex(index);
       }
     }
-  }, [selectedGoal, goals, cardIndex]);
+  }, [selectedGoal, goals, cardIndex, setSelectedGoal]);
 
   if (loading || !selectedGoal) {
     return <p>Loading...</p>;

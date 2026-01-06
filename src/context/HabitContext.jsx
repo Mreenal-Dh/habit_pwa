@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 
 export const HabitContext = createContext();
 
-export function HabitProvider({ children }) {
+function HabitProvider({ children }) {
   const [goals, setGoals] = useState([]);
   const [habits, setHabits] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -148,3 +148,5 @@ export function HabitProvider({ children }) {
     </HabitContext.Provider>
   );
 }
+
+export { HabitProvider };

@@ -14,7 +14,7 @@ export default function Tracker({ selectedGoal, setSelectedGoal }) {
   const [loading, setLoading] = useState(true);
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [showStreakDialog, setShowStreakDialog] = useState(false);
-  const { goals, habits, logs, loading: dataLoading, refreshLogs, updateLogInCache } = useContext(HabitContext);
+  const { goals, habits, logs, loading: dataLoading, updateLogInCache } = useContext(HabitContext);
   const { user } = useAuth();
 
   // Check if animation should play (only once per app session, not per page load)
@@ -39,10 +39,8 @@ export default function Tracker({ selectedGoal, setSelectedGoal }) {
       if (todayGoals.length > 0) {
         setSelectedGoal(todayGoals[0]);
       }
-      setLoading(false);
-    } else if (!dataLoading && goals.length === 0) {
-      setLoading(false);
-    } else if (!dataLoading) {
+    }
+    if (!dataLoading) {
       setLoading(false);
     }
   }, [dataLoading, goals, todayDay, selectedGoal, setSelectedGoal]);
@@ -71,11 +69,9 @@ export default function Tracker({ selectedGoal, setSelectedGoal }) {
       }));
 
       setTasks(finalTasks);
-
-      // Compute streak when goal, habits, or logs change
       setStreak(computeGoalStreak(updatedGoal || selectedGoal, goalHabits, logs));
     }
-  }, [selectedGoal, habits, logs, todayDate, goals]);
+  }, [selectedGoal, habits, logs, todayDate, goals, setSelectedGoal]);
 
   async function toggleHabit(habit) {
     const logRef = doc(

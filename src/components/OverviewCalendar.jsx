@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback, useMemo } from "react";
 import { HabitContext } from "../context/HabitContext";
 
 export default function OverviewCalendar({ goal, onDateSelect }) {
@@ -6,12 +6,6 @@ export default function OverviewCalendar({ goal, onDateSelect }) {
   const [completionMap, setCompletionMap] = useState({});
   const [loading, setLoading] = useState(true);
   const { habits: allHabits, logs: allLogs } = useContext(HabitContext);
-
-  // Get current month date range
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const dateRange = generateDateRange(firstDay, lastDay);
 
   function generateDateRange(start, end) {
     const dates = [];
@@ -21,13 +15,15 @@ export default function OverviewCalendar({ goal, onDateSelect }) {
     return dates;
   }
 
-  useEffect(() => {
-    if (goal?.id && allHabits.length > 0 && allLogs.length >= 0) {
-      loadOverviewData();
-    }
-  }, [goal?.id, allHabits, allLogs]);
+  // Memoize date range to prevent infinite updates
+  const dateRange = useMemo(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return generateDateRange(firstDay, lastDay);
+  }, []);
 
-  function loadOverviewData() {
+  const loadOverviewData = useCallback(() => {
     setLoading(true);
 
     // 1️⃣ Count total habits for this goal
@@ -54,7 +50,13 @@ export default function OverviewCalendar({ goal, onDateSelect }) {
 
     setCompletionMap(map);
     setLoading(false);
-  }
+  }, [goal, allHabits, allLogs, dateRange]);
+
+  useEffect(() => {
+    if (goal?.id && allHabits.length > 0 && allLogs.length >= 0) {
+      loadOverviewData();
+    }
+  }, [goal?.id, allHabits, allLogs, loadOverviewData]);
 
   function getCompletionState(date) {
     const completed = completionMap[date] || 0;
@@ -76,18 +78,6 @@ export default function OverviewCalendar({ goal, onDateSelect }) {
       case "none":
       default:
         return "var(--neutral-strong)"; // Gray
-    }
-  }
-
-  function getStateLabel(state) {
-    switch (state) {
-      case "all":
-        return "✓";
-      case "some":
-        return "◐";
-      case "none":
-      default:
-        return "";
     }
   }
 
