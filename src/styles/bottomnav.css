@@ -1,0 +1,35 @@
+.bottom-nav {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 420px;
+
+  background: var(--nav-surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--nav-border);
+  border-radius: 14px;
+
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  padding: 10px 0;
+  box-shadow: var(--nav-shadow);
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.bottom-nav button.active {
+  color: var(--accent);
+  font-weight: 500;
+}

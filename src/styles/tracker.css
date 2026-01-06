@@ -1,0 +1,156 @@
+/* Task list */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Single task row */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 14px;
+  margin-bottom: 12px;
+
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+}
+
+/* Checkbox */
+.task-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.task-item input[type="checkbox"]:active {
+  transform: scale(0.9);
+}
+
+/* Task text */
+.task-title {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+/* Completed task */
+.task-item.completed .task-title {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+/* Streak badge */
+.streak-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  transition: transform 0.15s ease;
+}
+
+.streak-badge:active {
+  transform: scale(0.92);
+}
+
+.streak-fire-image {
+  width: 56px;
+  height: 56px;
+  background: center/contain no-repeat url("../../fire/8%20keyframes%20of%20a%20bur3.png");
+  filter: drop-shadow(0 3px 12px rgba(255, 140, 0, 0.35));
+  transform: scale(0.75);
+}
+
+.streak-fire-image.animate {
+  animation: streakBurnFrames 0.3s steps(1) 2 forwards;
+}
+
+.streak-number {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+/* Streak dialog */
+.streak-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.streak-dialog {
+  background: var(--bg-card);
+  padding: 32px;
+  border-radius: 16px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--card-shadow);
+  text-align: center;
+  max-width: 90%;
+  width: 320px;
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes streakBurnFrames {
+  0% {
+    opacity: 1;
+    transform: scale(0.7);
+    background-image: url("../../fire/8%20keyframes%20of%20a%20bur.png");
+  }
+  33% {
+    opacity: 0.85;
+    transform: scale(0.65);
+    background-image: url("../../fire/8%20keyframes%20of%20a%20bur1.png");
+  }
+  66% {
+    opacity: 0.9;
+    transform: scale(0.6);
+    background-image: url("../../fire/8%20keyframes%20of%20a%20bur2.png");
+  }
+  100% {
+    opacity: 1;
+    transform: scale(0.75);
+    background-image: url("../../fire/8%20keyframes%20of%20a%20bur3.png");
+  }
+}

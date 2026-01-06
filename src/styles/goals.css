@@ -1,0 +1,25 @@
+/* Dropdown (select) */
+.goals-select {
+  appearance: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 6px 28px 6px 10px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.calendar-wrapper {
+  animation: calendarFadeScale 240ms ease;
+}
+
+@keyframes calendarFadeScale {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
