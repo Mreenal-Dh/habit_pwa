@@ -18,23 +18,25 @@ export default function Login() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+      background: "var(--bg-main)",
       fontFamily: "Inter, system-ui, sans-serif",
+      padding: "24px",
     }}>
       <div style={{
-        backgroundColor: "white",
-        padding: "48px 40px",
+        backgroundColor: "var(--bg-card)",
+        border: "1px solid var(--border-light)",
+        padding: "40px 32px",
         borderRadius: "16px",
-        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
+        boxShadow: "var(--card-shadow)",
         textAlign: "center",
-        maxWidth: "400px",
-        width: "90%",
+        maxWidth: "420px",
+        width: "100%",
       }}>
         <h1 style={{
-          fontSize: "48px",
+          fontSize: "44px",
           fontWeight: "700",
           margin: "0 0 8px 0",
-          color: "#333",
+          color: "var(--text-primary)",
           letterSpacing: "-1px",
         }}>
           habit.
@@ -42,8 +44,8 @@ export default function Login() {
         
         <p style={{
           fontSize: "16px",
-          color: "#666",
-          margin: "0 0 32px 0",
+          color: "var(--text-secondary)",
+          margin: "0 0 28px 0",
           lineHeight: "1.5",
         }}>
           Build better habits, one day at a time
@@ -51,30 +53,17 @@ export default function Login() {
 
         <button
           onClick={login}
+          className="ui-button ui-button-default"
           style={{
             width: "100%",
-            padding: "14px 24px",
+            padding: "14px 20px",
             fontSize: "16px",
             fontWeight: "600",
-            color: "#333",
-            backgroundColor: "white",
-            border: "2px solid #e0e0e0",
-            borderRadius: "8px",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
+            borderRadius: "10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "12px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.borderColor = "#4caf50";
-            e.target.style.boxShadow = "0 4px 12px rgba(76, 175, 80, 0.15)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.borderColor = "#e0e0e0";
-            e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.05)";
+            gap: "10px",
           }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -88,8 +77,8 @@ export default function Login() {
 
         <p style={{
           fontSize: "12px",
-          color: "#999",
-          margin: "24px 0 0 0",
+          color: "var(--text-secondary)",
+          margin: "20px 0 0 0",
         }}>
           Track your habits. Build your future.
         </p>

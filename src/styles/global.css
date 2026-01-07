@@ -226,3 +226,30 @@ ul {
 .bottom-nav button.active {
   color: var(--accent);
 }
+
+/* Glitch transition for profile avatar on theme toggle */
+/* Smooth theme fade-through animation for profile avatar */
+.theme-transition-img {
+  animation: theme-fade-through 220ms ease-out;
+  will-change: opacity, transform, filter;
+  backface-visibility: hidden;
+  display: block;
+}
+
+@keyframes theme-fade-through {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+    filter: blur(2px);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.995);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+}

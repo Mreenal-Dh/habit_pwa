@@ -72,7 +72,7 @@ export default function OverviewCalendar({ goal, onDateSelect }) {
   function getStateColor(state) {
     switch (state) {
       case "all":
-        return "var(--accent-strong)"; // Green
+        return "#4caf50"; // Green (fixed color)
       case "some":
         return "var(--warn)"; // Yellow
       case "none":
@@ -108,7 +108,7 @@ export default function OverviewCalendar({ goal, onDateSelect }) {
             display: "inline-block",
             width: "10px",
             height: "10px",
-            backgroundColor: "var(--accent-strong)",
+            backgroundColor: "#4caf50",
             marginRight: "4px",
             verticalAlign: "middle",
           }}></span>

@@ -4,29 +4,65 @@ import { signOut } from "firebase/auth";
 import { HabitContext } from "../context/HabitContext";
 import { useContext, useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { useColorTheme } from "../context/ColorThemeContext";
 
-const profileImages = [
-  new URL("../../profile/profile_1.png", import.meta.url).href,
-  new URL("../../profile/profile_2.png", import.meta.url).href,
-  new URL("../../profile/profile_3.png", import.meta.url).href,
-  new URL("../../profile/profile_4.jpg", import.meta.url).href,
+// Light/Dark variants for each profile
+const profiles = [
+  {
+    light: new URL("../../profile/profile_1.png", import.meta.url).href,
+    dark: new URL("../../profile/profile_1d.png", import.meta.url).href,
+  },
+  {
+    light: new URL("../../profile/profile_2.png", import.meta.url).href,
+    dark: new URL("../../profile/profile_2d.png", import.meta.url).href,
+  },
+  {
+    light: new URL("../../profile/profile_3.png", import.meta.url).href,
+    dark: new URL("../../profile/profile_3d.png", import.meta.url).href,
+  },
+  {
+    light: new URL("../../profile/profile_4.jpg", import.meta.url).href,
+    dark: new URL("../../profile/profile_4d.png", import.meta.url).href,
+  },
 ];
+
+// Map profile index to color theme
+const profileToTheme = ["green", "red", "saffron", "blue"];
 
 export default function Account() {
   const { user } = useAuth();
   const { clearData } = useContext(HabitContext);
   const { isDark, toggleTheme } = useTheme();
+  const { colorTheme, setColorTheme } = useColorTheme();
   const [showPicker, setShowPicker] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState(() => {
-    const stored = localStorage.getItem("selectedProfileImage");
-    return stored || user?.photoURL || profileImages[0];
+  const [themeTransition, setThemeTransition] = useState(false);
+    // Trigger a brief smooth animation when theme flips
+    useEffect(() => {
+      setThemeTransition(true);
+      const t = setTimeout(() => setThemeTransition(false), 240);
+      return () => clearTimeout(t);
+    }, [isDark]);
+  const [selectedProfileIndex, setSelectedProfileIndex] = useState(() => {
+    const storedIndex = localStorage.getItem("selectedProfileIndex");
+    if (storedIndex !== null) {
+      const idx = parseInt(storedIndex, 10);
+      return Number.isNaN(idx) ? 0 : Math.max(0, Math.min(idx, profiles.length - 1));
+    }
+    // Back-compat: try to map old stored image URL to an index
+    const oldImg = localStorage.getItem("selectedProfileImage");
+    if (oldImg) {
+      const found = profiles.findIndex(p => p.light === oldImg || p.dark === oldImg);
+      if (found >= 0) return found;
+    }
+    return 0;
   });
 
+  // Persist selection and keep old key updated for any legacy reads
   useEffect(() => {
-    if (selectedAvatar) {
-      localStorage.setItem("selectedProfileImage", selectedAvatar);
-    }
-  }, [selectedAvatar]);
+    localStorage.setItem("selectedProfileIndex", String(selectedProfileIndex));
+    const currentSrc = profiles[selectedProfileIndex][isDark ? "dark" : "light"];
+    localStorage.setItem("selectedProfileImage", currentSrc);
+  }, [selectedProfileIndex, isDark]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -65,8 +101,9 @@ export default function Account() {
             }}
           >
             <img
-              src={selectedAvatar}
+              src={profiles[selectedProfileIndex][isDark ? "dark" : "light"]}
               alt="Profile"
+              className={themeTransition ? "theme-transition-img" : undefined}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
@@ -122,9 +159,9 @@ export default function Account() {
         <div className="theme-toggle-row">
           <div className="theme-toggle-copy">
             <h3 style={{ fontWeight: "500", marginBottom: "4px" }}>Theme</h3>
-            <p className="text-secondary" style={{ marginBottom: 0 }}>
-              Defaults to your system. Once you change it, we remember your choice.
-            </p>
+              <p className="text-secondary" style={{ marginBottom: 0 }}>
+                Choose between dark and light
+              </p>
           </div>
           <button
             type="button"
@@ -190,8 +227,7 @@ export default function Account() {
               boxShadow: "var(--card-shadow)",
             }}
           >
-            <h3 style={{ margin: "0 0 12px 0" }}>Choose a photo</h3>
-            <p style={{ margin: "0 0 16px 0", color: "var(--text-secondary)" }}>Pick an avatar; it updates immediately.</p>
+            <h3 style={{ margin: "0 0 16px 0" }}>Choose an avatar</h3>
             <div
               style={{
                 display: "grid",
@@ -199,13 +235,14 @@ export default function Account() {
                 gap: "12px",
               }}
             >
-              {profileImages.map((src, index) => {
-                const isSelected = src === selectedAvatar;
+              {profiles.map((p, index) => {
+                const isSelected = index === selectedProfileIndex;
                 return (
                   <button
                     key={index}
                     onClick={() => {
-                      setSelectedAvatar(src);
+                      setSelectedProfileIndex(index);
+                      setColorTheme(profileToTheme[index]);
                       setShowPicker(false);
                     }}
                     style={{
@@ -219,7 +256,7 @@ export default function Account() {
                     }}
                   >
                     <img
-                      src={src}
+                      src={p[isDark ? "dark" : "light"]}
                       alt={`Profile option ${index + 1}`}
                       style={{
                         width: "100%",
@@ -233,20 +270,20 @@ export default function Account() {
                 );
               })}
             </div>
-            <div style={{ marginTop: "18px", textAlign: "right" }}>
+            <div style={{ marginTop: "18px", textAlign: "center" }}>
               <button
                 onClick={() => setShowPicker(false)}
                 style={{
-                  padding: "9px 14px",
-                  backgroundColor: "var(--bg-card)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-light)",
+                  padding: "10px 18px",
+                  backgroundColor: "var(--accent)",
+                  color: "white",
+                  border: "none",
                   borderRadius: "8px",
                   cursor: "pointer",
                   fontWeight: "600",
                 }}
               >
-                Close
+                Cancel
               </button>
             </div>
           </div>

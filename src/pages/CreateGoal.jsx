@@ -85,8 +85,8 @@ export default function CreateGoal({ setScreen }) {
   }
 
   return (
-    <div className="page" style={{ maxWidth: "600px", margin: "0 auto" }}>
-      <h1 className="mb-md">Create New Goal</h1>
+    <div className="page">
+      <h1 style={{ marginBottom: "32px" }}>Create New Goal</h1>
 
       <div className="section">
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
@@ -99,36 +99,13 @@ export default function CreateGoal({ setScreen }) {
           placeholder="e.g., Get Fit, Learn Spanish"
           style={{
             width: "100%",
-            padding: "10px",
+            padding: "11px 14px",
             border: "1px solid var(--border-light)",
             borderRadius: "8px",
             backgroundColor: "var(--bg-card)",
             color: "var(--text-primary)",
             fontSize: "14px",
-          }}
-        />
-      </div>
-
-      <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
-
-      <div className="section">
-        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>          Quote (Optional)
-        </label>
-        <textarea
-          value={quote}
-          onChange={(e) => setQuote(e.target.value)}
-          placeholder="Add an inspiring quote for this goal..."
-          style={{
-            width: "100%",
-            padding: "10px",
-            border: "1px solid var(--border-light)",
-            borderRadius: "8px",
-            minHeight: "60px",
             fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: "14px",
-            backgroundColor: "var(--bg-card)",
-            color: "var(--text-primary)",
-            resize: "vertical",
           }}
         />
       </div>
@@ -136,7 +113,8 @@ export default function CreateGoal({ setScreen }) {
       <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
 
       <div className="section">
-        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>          Start Date (Optional)
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
+          Start Date (Optional)
         </label>
         <input
           type="date"
@@ -161,92 +139,132 @@ export default function CreateGoal({ setScreen }) {
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
           Active Days
         </label>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          {WEEK_DAYS.map(day => (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "nowrap", overflowX: "auto" }}>
+          {WEEK_DAYS.map((day) => (
             <button
               key={day}
               onClick={() => toggleDay(day)}
               style={{
-                padding: "8px 12px",
-                border: "2px solid",
-                borderColor: selectedDays.includes(day) ? "var(--accent)" : "var(--border-light)",
+                width: "44px",
+                height: "44px",
+                border: "2px solid var(--border-light)",
                 backgroundColor: selectedDays.includes(day) ? "var(--accent)" : "var(--bg-card)",
                 color: selectedDays.includes(day) ? "#ffffff" : "var(--text-primary)",
                 borderRadius: "8px",
                 cursor: "pointer",
-                fontWeight: selectedDays.includes(day) ? "bold" : "normal",
-                fontSize: "14px",
+                fontWeight: "600",
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+                flexShrink: 0,
               }}
             >
-              {selectedDays.includes(day) ? `✓ ${day}` : day}
+              {day.slice(0, 2)}
             </button>
           ))}
         </div>
       </div>
 
+      <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
+
+      <div className="section">
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
+          Quote (Optional)
+        </label>
+        <textarea
+          value={quote}
+          onChange={(e) => setQuote(e.target.value)}
+          placeholder="Add an inspiring quote for this goal..."
+          style={{
+            width: "100%",
+            padding: "10px",
+            border: "1px solid var(--border-light)",
+            borderRadius: "8px",
+            minHeight: "60px",
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: "14px",
+            backgroundColor: "var(--bg-card)",
+            color: "var(--text-primary)",
+            resize: "vertical",
+          }}
+        />
+      </div>
+
+      <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
+
       <div className="section">
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
           Habits
         </label>
-        
-        {habits.length > 0 && (
-          <div className="mb-md" style={{ padding: "0", listStyle: "none" }}>
-            {habits.map((habit, index) => (
-              <div
-                key={index}
-                className="mb-xs"
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "12px 16px",
-                  backgroundColor: "var(--bg-card)",
-                  borderRadius: "10px",
-                  border: "1px solid var(--border-light)",
-                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                }}
-              >
-                <span style={{ color: "var(--text-primary)", fontSize: "15px", fontWeight: "500" }}>{habit}</span>
-                <button
-                  onClick={() => removeHabit(index)}
-                  style={{
-                    padding: "6px 8px",
-                    backgroundColor: "transparent",
-                    color: "#f44336",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontSize: "18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "background-color 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = "rgba(244, 67, 54, 0.08)"}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
-                >
-                  🗑️
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
-          <input
-            type="text"
-            value={newHabit}
-            onChange={(e) => setNewHabit(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && addHabit()}
-            placeholder="e.g., Walk, Workout"
-            style={{
-              flex: 1,
-              padding: "11px 14px",
+        {habits.map((habit, index) => (
+          <div 
+            key={index} 
+            className="mb-xs" 
+            style={{ 
+              padding: "12px 16px", 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              backgroundColor: "var(--bg-card)",
               border: "1px solid var(--border-light)",
               borderRadius: "10px",
-              backgroundColor: "var(--bg-card)",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+            }}
+          >
+            <span style={{ color: "var(--text-primary)", fontSize: "15px", fontWeight: "500" }}>{habit}</span>
+            <button
+              onClick={() => removeHabit(index)}
+              style={{
+                padding: "6px 8px",
+                backgroundColor: "transparent",
+                color: "#f44336",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background-color 0.2s ease",
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = "rgba(244, 67, 54, 0.08)"}
+              onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+            >
+              🗑️
+            </button>
+          </div>
+        ))}
+        
+        <div 
+          className="mb-xs" 
+          style={{ 
+            padding: "12px 16px", 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center",
+            gap: "10px",
+            backgroundColor: "var(--bg-card)",
+            border: "1px solid var(--border-light)",
+            borderRadius: "10px",
+            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          <input
+            value={newHabit}
+            onChange={(e) => setNewHabit(e.target.value)}
+            placeholder="Add new habit"
+            onKeyPress={(e) => e.key === "Enter" && addHabit()}
+            style={{
+              flex: 1,
+              padding: "0",
+              border: "none",
+              outline: "none",
+              backgroundColor: "transparent",
               color: "var(--text-primary)",
-              fontSize: "14px",
+              fontSize: "15px",
+              fontWeight: "500",
             }}
           />
           <button
@@ -254,27 +272,27 @@ export default function CreateGoal({ setScreen }) {
             style={{
               backgroundColor: "var(--accent)",
               color: "white",
-              border: "2px solid var(--accent)",
-              borderRadius: "50%",
+              border: "none",
+              borderRadius: "6px",
               cursor: "pointer",
               fontWeight: "bold",
               fontSize: "20px",
-              width: "42px",
-              height: "42px",
-              minWidth: "42px",
-              minHeight: "42px",
+              width: "32px",
+              height: "32px",
+              minWidth: "32px",
+              minHeight: "32px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              transition: "transform 0.2s ease, opacity 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.target.style.transform = "scale(1.08)";
-              e.target.style.boxShadow = "0 4px 12px rgba(76, 175, 80, 0.3)";
+              e.target.style.transform = "scale(1.1)";
+              e.target.style.opacity = "0.9";
             }}
             onMouseLeave={(e) => {
               e.target.style.transform = "scale(1)";
-              e.target.style.boxShadow = "none";
+              e.target.style.opacity = "1";
             }}
           >
             +
