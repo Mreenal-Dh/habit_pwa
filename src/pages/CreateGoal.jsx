@@ -8,6 +8,7 @@ const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export default function CreateGoal({ setScreen }) {
   const { user } = useAuth();
   const [goalTitle, setGoalTitle] = useState("");
+  const [numberOfDays, setNumberOfDays] = useState("");
   const [selectedDays, setSelectedDays] = useState([]);
   const [habits, setHabits] = useState([]);
   const [newHabit, setNewHabit] = useState("");
@@ -52,9 +53,22 @@ export default function CreateGoal({ setScreen }) {
     setSaving(true);
 
     try {
+      // Calculate numberOfDays: use provided value or default to days in month
+      let finalNumberOfDays = numberOfDays ? parseInt(numberOfDays) : null;
+      
+      if (!finalNumberOfDays || finalNumberOfDays < 1) {
+        // Default to number of days in the month
+        const targetDate = startDate ? new Date(startDate) : new Date();
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth();
+        // Get last day of month
+        finalNumberOfDays = new Date(year, month + 1, 0).getDate();
+      }
+
       // 1️⃣ Create goal
       const goalRef = await addDoc(collection(db, "goals"), {
         title: goalTitle.trim(),
+        numberOfDays: finalNumberOfDays,
         days: selectedDays,
         quote: quote.trim(),
         startDate: startDate ? new Date(startDate) : null,
@@ -134,6 +148,35 @@ export default function CreateGoal({ setScreen }) {
           Defaults to the goal creation date if left blank.
         </p>
       </div>
+
+      <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
+
+      <div className="section">
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
+          Number of Days for Calendar
+        </label>
+        <input
+          type="number"
+          min="1"
+          max="365"
+          value={numberOfDays}
+          onChange={(e) => setNumberOfDays(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            border: "1px solid var(--border-light)",
+            borderRadius: "8px",
+            backgroundColor: "var(--bg-card)",
+            color: "var(--text-primary)",
+            fontSize: "14px",
+          }}
+        />
+        <p style={{ marginTop: "6px", color: "var(--text-secondary)", fontSize: "12px" }}>
+          Set the number of days to track. If more than 5 rows are needed, columns will expand horizontally.
+        </p>
+      </div>
+
+      <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
 
       <div className="section">
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>

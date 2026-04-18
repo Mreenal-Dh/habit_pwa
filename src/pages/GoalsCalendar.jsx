@@ -20,6 +20,8 @@ export default function GoalsCalendar({ setScreen, selectedGoal, setSelectedGoal
   const [preStartDate, setPreStartDate] = useState(null);
   const [showDayDialog, setShowDayDialog] = useState(false);
   const [dialogDate, setDialogDate] = useState(null);
+  const [showAllHabitsDialog, setShowAllHabitsDialog] = useState(false);
+  const [allHabitsGoal, setAllHabitsGoal] = useState(null);
 
   const swipeThreshold = 0.2; // 20% of container width
 
@@ -89,6 +91,22 @@ export default function GoalsCalendar({ setScreen, selectedGoal, setSelectedGoal
       setSelectedGoal(goals[0]);
       setCardIndex(0);
     }
+    // If selectedGoal exists, refresh it from latest goals data
+    if (selectedGoal) {
+      const updatedGoal = goals.find(g => g.id === selectedGoal.id);
+      if (updatedGoal && updatedGoal !== selectedGoal) {
+        setSelectedGoal(updatedGoal);
+      }
+    }
+    // If selectedGoal was deleted, select a new one
+    if (selectedGoal && !goals.find(g => g.id === selectedGoal.id)) {
+      if (goals.length > 0) {
+        setSelectedGoal(goals[0]);
+        setCardIndex(0);
+      } else {
+        setSelectedGoal(null);
+      }
+    }
   }, [goals, selectedGoal, setSelectedGoal]);
 
   // Sync cardIndex when selectedGoal changes (from dropdown)
@@ -101,7 +119,39 @@ export default function GoalsCalendar({ setScreen, selectedGoal, setSelectedGoal
     }
   }, [selectedGoal, goals, cardIndex, setSelectedGoal]);
 
-  if (loading || !selectedGoal) {
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (goals.length === 0) {
+    return (
+      <div className="page" style={{ paddingTop: "16px", paddingBottom: "80px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <h1>Goals & Calendar</h1>
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%" }}>
+          <p style={{ fontSize: "18px", color: "var(--text-secondary)", marginBottom: "24px" }}>No goal is created</p>
+          <button
+            onClick={() => setScreen({ name: "create" })}
+            style={{
+              padding: "10px 24px",
+              backgroundColor: "var(--accent)",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px",
+            }}
+          >
+            + New Goal
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedGoal) {
     return <p>Loading...</p>;
   }
 
@@ -250,34 +300,28 @@ export default function GoalsCalendar({ setScreen, selectedGoal, setSelectedGoal
                         {goalHabits.length === 0 ? (
                           <p style={{ color: "var(--text-secondary)", fontSize: "14px" }}>No habits yet. Click Edit Tasks to add some.</p>
                         ) : (
-                          <>
-                            <ul style={{ listStyle: "disc", paddingLeft: "18px", color: "var(--text-primary)", lineHeight: 1.5 }}>
-                              {visibleTasks.map((habit) => (
-                                <li key={habit.id}>{habit.title}</li>
-                              ))}
-                            </ul>
-                            
-                            {hasMoreTasks && (
-                              <div 
-                                onClick={() => setScreen({ name: "edit", goalId: goal.id })}
-                                style={{
-                                  textAlign: "center",
-                                  marginTop: "8px",
-                                  color: "var(--accent)",
-                                  fontSize: "14px",
-                                  fontWeight: 600,
-                                  cursor: "pointer",
-                                  textDecoration: "underline"
-                                }}
-                              >
-                                View All ({goalHabits.length} habits)
-                              </div>
-                            )}
-                          </>
+                          <ul style={{ listStyle: "disc", paddingLeft: "18px", color: "var(--text-primary)", lineHeight: 1.5 }}>
+                            {visibleTasks.map((habit) => (
+                              <li key={habit.id}>{habit.title}</li>
+                            ))}
+                          </ul>
                         )}
                       </div>
 
-                      <div style={{ display: "flex", justifyContent: "center" }}>
+                      <div style={{ display: "flex", justifyContent: "center", gap: "8px" }}>
+                        {hasMoreTasks && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => {
+                              setAllHabitsGoal(goal);
+                              setShowAllHabitsDialog(true);
+                            }}
+                            style={{ padding: "5px 10px", fontWeight: 600, fontSize: "11px", minWidth: "0", backgroundColor: "var(--accent)" }}
+                          >
+                            View All
+                          </Button>
+                        )}
                         <Button
                           variant="contained"
                           size="small"
@@ -416,6 +460,69 @@ export default function GoalsCalendar({ setScreen, selectedGoal, setSelectedGoal
             date={dialogDate}
             onClose={() => setShowDayDialog(false)}
           />
+        </div>
+      </div>
+    )}
+    {showAllHabitsDialog && allHabitsGoal && (
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.45)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 999,
+          padding: "16px",
+          animation: "dialogFade 160ms ease",
+        }}
+        onClick={() => setShowAllHabitsDialog(false)}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: "var(--bg-card)",
+            borderRadius: "12px",
+            padding: "20px",
+            maxWidth: "480px",
+            width: "100%",
+            maxHeight: "80vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "var(--card-shadow)",
+            border: "1px solid var(--border-light)",
+            animation: "dialogSlide 180ms ease",
+          }}
+        >
+          <h3 style={{ margin: "0 0 16px 0", color: "var(--text-primary)" }}>
+            {allHabitsGoal.title} - All Habits
+          </h3>
+          <div style={{ flex: 1, overflow: "auto", marginBottom: "16px" }}>
+            <ul style={{ listStyle: "disc", paddingLeft: "20px", color: "var(--text-primary)", lineHeight: 1.8, margin: 0 }}>
+              {habits.filter(h => h.goalId === allHabitsGoal.id).map((habit) => (
+                <li key={habit.id} style={{ marginBottom: "8px" }}>{habit.title}</li>
+              ))}
+            </ul>
+          </div>
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+            <button
+              onClick={() => setShowAllHabitsDialog(false)}
+              style={{
+                padding: "10px 18px",
+                backgroundColor: "var(--accent)",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     )}

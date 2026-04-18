@@ -137,10 +137,10 @@ ul {
   content: '';
   position: absolute;
   top: 0;
-  right: -8px;
+  right: 0;
   bottom: 0;
   width: 8px;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0));
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0));
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -148,6 +148,11 @@ ul {
 
 .sticky-column.scrolled::after {
   opacity: 1;
+}
+
+/* Add a subtle drop shadow to the sticky cells themselves for realism */
+.sticky-column.scrolled {
+  box-shadow: 1px 0 6px rgba(0, 0, 0, 0.10);
 }
 
 /* Shadows - subtle and professional */

@@ -10,7 +10,10 @@ import {
   updateDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { Button } from "@mui/material";
+import { Button, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
 import { useAuth } from "../auth/AuthContext";
 import { HabitContext } from "../context/HabitContext";
 
@@ -21,8 +24,14 @@ export default function EditTasks({ setScreen, goalId }) {
   const [habits, setHabits] = useState([]);
   const [newHabit, setNewHabit] = useState("");
   const [goalTitle, setGoalTitle] = useState("");
+  const [numberOfDays, setNumberOfDays] = useState("");
   const [quote, setQuote] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [editingHabitId, setEditingHabitId] = useState(null);
+  const [editingHabitTitle, setEditingHabitTitle] = useState("");
+  const [deleteGoalDialogOpen, setDeleteGoalDialogOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { user } = useAuth();
   const { refreshGoals, refreshHabits } = useContext(HabitContext);
 
@@ -37,6 +46,20 @@ export default function EditTasks({ setScreen, goalId }) {
       return `${year}-${month}-${day}`;
     };
 
+    const getDefaultDaysForGoal = (goalData) => {
+      const rawDate = goalData?.startDate || goalData?.createdAt;
+      let baseDate = new Date();
+
+      if (rawDate) {
+        const parsed = rawDate.toDate ? rawDate.toDate() : new Date(rawDate);
+        if (!isNaN(parsed.getTime())) {
+          baseDate = parsed;
+        }
+      }
+
+      return new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
+    };
+
     const goalSnap = await getDocs(
       query(
         collection(db, "goals"),
@@ -48,6 +71,8 @@ export default function EditTasks({ setScreen, goalId }) {
       const goalData = { id: goalSnap.docs[0].id, ...goalSnap.docs[0].data() };
       setGoal(goalData);
       setGoalTitle(goalData.title);
+      const fallbackDays = getDefaultDaysForGoal(goalData);
+      setNumberOfDays(goalData.numberOfDays ? goalData.numberOfDays.toString() : fallbackDays.toString());
       setQuote(goalData.quote || "");
       setStartDate(goalData.startDate ? toInputDate(goalData.startDate) : "");
     }
@@ -70,46 +95,53 @@ export default function EditTasks({ setScreen, goalId }) {
     }
   }, [goalId, user, loadGoal, loadHabits]);
 
-  async function toggleDay(day) {
+  function toggleDay(day) {
     const updatedDays = goal.days.includes(day)
       ? goal.days.filter(d => d !== day)
       : [...goal.days, day];
 
-    await updateDoc(doc(db, "goals", goal.id), {
-      days: updatedDays
-    });
-
     setGoal({ ...goal, days: updatedDays });
-    refreshGoals();
   }
 
-  async function updateGoalTitle() {
-    if (!goalTitle.trim() || goalTitle === goal.title) return;
+  async function saveGoalChanges() {
+    if (!goalTitle.trim()) {
+      setErrorMessage("Please enter a goal title.");
+      setErrorDialogOpen(true);
+      return;
+    }
 
-    await updateDoc(doc(db, "goals", goal.id), {
-      title: goalTitle.trim()
-    });
+    const parsedStartDate = startDate ? new Date(startDate) : null;
+    let finalNumberOfDays = numberOfDays ? parseInt(numberOfDays) : null;
 
-    setGoal({ ...goal, title: goalTitle.trim() });
-    refreshGoals();
-  }
+    if (!finalNumberOfDays || finalNumberOfDays < 1) {
+      let baseDate = parsedStartDate || new Date();
+      if (!parsedStartDate && goal?.createdAt) {
+        const created = goal.createdAt.toDate ? goal.createdAt.toDate() : new Date(goal.createdAt);
+        if (!isNaN(created.getTime())) {
+          baseDate = created;
+        }
+      }
+      finalNumberOfDays = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
+    }
 
-  async function updateQuote() {
-    await updateDoc(doc(db, "goals", goal.id), {
-      quote: quote.trim()
-    });
-    setGoal({ ...goal, quote: quote.trim() });
-    refreshGoals();
-  }
+    const payload = {
+      title: goalTitle.trim(),
+      quote: quote.trim(),
+      startDate: parsedStartDate,
+      numberOfDays: finalNumberOfDays,
+      days: goal?.days || [],
+    };
 
-  async function updateStartDate(value) {
-    setStartDate(value);
-    const parsed = value ? new Date(value) : null;
-    await updateDoc(doc(db, "goals", goal.id), {
-      startDate: parsed,
-    });
-    setGoal({ ...goal, startDate: parsed });
-    refreshGoals();
+    try {
+      await updateDoc(doc(db, "goals", goal.id), payload);
+      setGoal({ ...goal, ...payload });
+      refreshGoals();
+      setScreen({ name: "goals" });
+    } catch (error) {
+      console.error("Error saving goal:", error);
+      setErrorMessage("Failed to save changes. Please try again.");
+      setErrorDialogOpen(true);
+    }
   }
 
   async function addHabit() {
@@ -133,13 +165,113 @@ export default function EditTasks({ setScreen, goalId }) {
     refreshHabits();
   }
 
+  async function deleteGoal() {
+    try {
+      // Delete all habits associated with this goal
+      const habitsQuery = query(
+        collection(db, "habits"),
+        where("goalId", "==", goalId),
+        where("userId", "==", user.uid)
+      );
+      const habitsSnap = await getDocs(habitsQuery);
+      await Promise.all(habitsSnap.docs.map(d => deleteDoc(doc(db, "habits", d.id))));
+
+      // Delete all logs associated with this goal
+      const logsQuery = query(
+        collection(db, "habit_logs"),
+        where("goalId", "==", goalId),
+        where("userId", "==", user.uid)
+      );
+      const logsSnap = await getDocs(logsQuery);
+      await Promise.all(logsSnap.docs.map(d => deleteDoc(doc(db, "habit_logs", d.id))));
+
+      // Delete the goal
+      await deleteDoc(doc(db, "goals", goalId));
+
+      // Refresh context and navigate back
+      refreshGoals();
+      refreshHabits();
+      setDeleteGoalDialogOpen(false);
+      setScreen({ name: "goals" });
+    } catch (error) {
+      console.error("Error deleting goal:", error);
+      setDeleteGoalDialogOpen(false);
+      setErrorMessage("Failed to delete goal. Please try again.");
+      setErrorDialogOpen(true);
+    }
+  }
+
+  function startEditingHabit(habit) {
+    setEditingHabitId(habit.id);
+    setEditingHabitTitle(habit.title);
+  }
+
+  function cancelEditingHabit() {
+    setEditingHabitId(null);
+    setEditingHabitTitle("");
+  }
+
+  async function saveEditedHabit(habitId) {
+    if (!editingHabitTitle.trim()) {
+      cancelEditingHabit();
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "habits", habitId), {
+        title: editingHabitTitle.trim()
+      });
+      
+      loadHabits();
+      refreshHabits();
+      cancelEditingHabit();
+    } catch (error) {
+      console.error("Error updating habit:", error);
+      setErrorMessage("Failed to update habit. Please try again.");
+      setErrorDialogOpen(true);
+    }
+  }
+
   if (!goal) {
     return <p>Loading...</p>;
   }
 
   return (
     <div className="page">
-      <h1 style={{ marginBottom: "32px" }}>Edit Goal</h1>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: "32px" 
+      }}>
+        <h1 style={{ margin: 0 }}>Edit Goal</h1>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <IconButton
+            onClick={saveGoalChanges}
+            style={{
+              backgroundColor: "var(--accent)",
+              color: "white",
+              border: "1px solid var(--accent)",
+              padding: "8px",
+            }}
+            title="Save"
+          >
+            <SaveIcon />
+          </IconButton>
+          <IconButton
+            onClick={() => setDeleteGoalDialogOpen(true)}
+            style={{
+              backgroundColor: "#f44336",
+              color: "white",
+              border: "1px solid #f44336",
+              padding: "8px",
+            }}
+            title="Delete goal"
+          >
+            <DeleteIcon />
+          </IconButton>
+        </div>
+      </div>
 
       <div className="section">
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
@@ -148,7 +280,6 @@ export default function EditTasks({ setScreen, goalId }) {
         <input
           value={goalTitle}
           onChange={(e) => setGoalTitle(e.target.value)}
-          onBlur={updateGoalTitle}
           style={{
             width: "100%",
             padding: "11px 14px",
@@ -171,7 +302,7 @@ export default function EditTasks({ setScreen, goalId }) {
         <input
           type="date"
           value={startDate}
-          onChange={(e) => updateStartDate(e.target.value)}
+          onChange={(e) => setStartDate(e.target.value)}
           style={{
             width: "100%",
             padding: "10px",
@@ -186,6 +317,35 @@ export default function EditTasks({ setScreen, goalId }) {
           Defaults to the goal creation date if left blank.
         </p>
       </div>
+
+      <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
+
+      <div className="section">
+        <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
+          Number of Days for Calendar
+        </label>
+        <input
+          type="number"
+          min="1"
+          max="365"
+          value={numberOfDays}
+          onChange={(e) => setNumberOfDays(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            border: "1px solid var(--border-light)",
+            borderRadius: "8px",
+            backgroundColor: "var(--bg-card)",
+            color: "var(--text-primary)",
+            fontSize: "14px",
+          }}
+        />
+        <p style={{ marginTop: "6px", color: "var(--text-secondary)", fontSize: "12px" }}>
+          Set the number of days to track. If more than 5 rows are needed, columns will expand horizontally.
+        </p>
+      </div>
+
+      <div style={{ height: "1px", background: "var(--divider)", margin: "24px 0" }} />
 
       <div className="section">
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "14px" }}>
@@ -228,7 +388,6 @@ export default function EditTasks({ setScreen, goalId }) {
         <textarea
           value={quote}
           onChange={(e) => setQuote(e.target.value)}
-          onBlur={updateQuote}
           placeholder="Add an inspiring quote for this goal..."
           style={{
             width: "100%",
@@ -266,27 +425,71 @@ export default function EditTasks({ setScreen, goalId }) {
               boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
             }}
           >
-            <span style={{ color: "var(--text-primary)", fontSize: "15px", fontWeight: "500" }}>{habit.title}</span>
-            <button
-              onClick={() => deleteHabit(habit.id)}
-              style={{
-                padding: "6px 8px",
-                backgroundColor: "transparent",
-                color: "#f44336",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background-color 0.2s ease",
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = "rgba(244, 67, 54, 0.08)"}
-              onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
-            >
-              🗑️
-            </button>
+            {editingHabitId === habit.id ? (
+              <>
+                <input
+                  value={editingHabitTitle}
+                  onChange={(e) => setEditingHabitTitle(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && saveEditedHabit(habit.id)}
+                  onBlur={() => saveEditedHabit(habit.id)}
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    padding: "4px 8px",
+                    border: "1px solid var(--accent)",
+                    borderRadius: "6px",
+                    backgroundColor: "var(--bg-card)",
+                    color: "var(--text-primary)",
+                    fontSize: "15px",
+                    fontWeight: "500",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  onClick={cancelEditingHabit}
+                  style={{
+                    padding: "6px 12px",
+                    backgroundColor: "transparent",
+                    color: "var(--text-secondary)",
+                    border: "1px solid var(--border-light)",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    marginLeft: "8px",
+                  }}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <span style={{ color: "var(--text-primary)", fontSize: "15px", fontWeight: "500" }}>
+                  {habit.title}
+                </span>
+                <div style={{ display: "flex", gap: "4px" }}>
+                  <IconButton
+                    onClick={() => startEditingHabit(habit)}
+                    size="small"
+                    style={{
+                      color: "var(--accent)",
+                    }}
+                    title="Edit habit"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => deleteHabit(habit.id)}
+                    size="small"
+                    style={{
+                      color: "#f44336",
+                    }}
+                    title="Delete habit"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </div>
+              </>
+            )}
           </div>
         ))}
         
@@ -379,6 +582,80 @@ export default function EditTasks({ setScreen, goalId }) {
           Back to Goals
         </button>
       </div>
+
+      {/* Delete Goal Confirmation Dialog */}
+      <Dialog
+        open={deleteGoalDialogOpen}
+        onClose={() => setDeleteGoalDialogOpen(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: "var(--bg-card)",
+            color: "var(--text-primary)",
+            borderRadius: "12px",
+          },
+        }}
+      >
+        <DialogTitle style={{ fontWeight: "700", color: "var(--text-primary)" }}>
+          Delete Goal
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText style={{ color: "var(--text-secondary)", marginTop: "8px" }}>
+            Are you sure you want to delete this goal? This will also delete all associated habits and logs. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions style={{ padding: "16px" }}>
+          <Button 
+            onClick={() => setDeleteGoalDialogOpen(false)} 
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={deleteGoal} 
+            variant="contained"
+            style={{ 
+              backgroundColor: "#f44336",
+              color: "white"
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog
+        open={errorDialogOpen}
+        onClose={() => setErrorDialogOpen(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: "var(--bg-card)",
+            color: "var(--text-primary)",
+            borderRadius: "12px",
+          },
+        }}
+      >
+        <DialogTitle style={{ fontWeight: "700", color: "var(--text-primary)" }}>
+          Error
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText style={{ color: "var(--text-secondary)", marginTop: "8px" }}>
+            {errorMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions style={{ padding: "16px" }}>
+          <Button 
+            onClick={() => setErrorDialogOpen(false)} 
+            variant="contained"
+            style={{ 
+              backgroundColor: "var(--accent)",
+              color: "white"
+            }}
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

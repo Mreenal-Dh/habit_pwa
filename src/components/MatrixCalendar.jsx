@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, useCallback, useMemo } from "react";
+import { useEffect, useState, useContext, useCallback, useMemo, useRef } from "react";
 import { HabitContext } from "../context/HabitContext";
 
 export default function MatrixCalendar({ goal, onDateSelect }) {
@@ -6,7 +6,15 @@ export default function MatrixCalendar({ goal, onDateSelect }) {
   const [logsMap, setLogsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const scrollContainerRef = useRef(null);
   const { habits: allHabits, logs: allLogs } = useContext(HabitContext);
+
+  // Measure the first date column width to compute scroll offsets reliably
+  const getDateColumnWidth = useCallback(() => {
+    const headerCell = scrollContainerRef.current?.querySelector("th[data-date]");
+    if (!headerCell) return 60; // fallback width
+    return headerCell.getBoundingClientRect().width;
+  }, []);
 
   function generateDateRange(start, end) {
     const dates = [];
@@ -56,6 +64,32 @@ export default function MatrixCalendar({ goal, onDateSelect }) {
     }
   }, [goal?.id, allHabits, allLogs, loadCalendarData]);
 
+  // Scroll to 1 date before today, but at least past the first column
+  useEffect(() => {
+    if (!loading && scrollContainerRef.current && dateRange.length > 0) {
+      const today = new Date();
+      const threeDaysBefore = new Date(today);
+      threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
+      const targetDate = threeDaysBefore.toISOString().split("T")[0];
+
+      const targetIndex = dateRange.indexOf(targetDate);
+
+      // Offset past two date columns (two full columns + small buffer)
+      const columnWidth = getDateColumnWidth();
+      const baseOffset = columnWidth * 2 + 20; // push view to start after two dates
+      const scrollPosition = targetIndex !== -1
+        ? Math.max(baseOffset, targetIndex * columnWidth)
+        : baseOffset;
+
+      // Defer until after layout to avoid layout thrash
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollLeft = scrollPosition;
+        }
+      });
+    }
+  }, [loading, dateRange, getDateColumnWidth]);
+
   if (loading) {
     return <p>Loading calendar...</p>;
   }
@@ -77,6 +111,7 @@ export default function MatrixCalendar({ goal, onDateSelect }) {
   return (
     <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
       <div 
+        ref={scrollContainerRef}
         style={{ 
           overflowX: "auto", 
           overflowY: "hidden",
@@ -105,6 +140,7 @@ export default function MatrixCalendar({ goal, onDateSelect }) {
             {dateRange.map(date => (
               <th
                 key={date}
+                data-date={date}
                 style={{
                   border: "1px solid var(--border-light)",
                   padding: "10px 8px",

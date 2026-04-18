@@ -7,6 +7,8 @@ import EditTasks from "./pages/EditTasks";
 import Account from "./pages/Account";
 import CreateGoal from "./pages/CreateGoal";
 import DayDetails from "./pages/DayDetails";
+import PomodoroTimer from "./pages/PomodoroTimer";
+import WaterTracker from "./pages/WaterTracker";
 import BottomNav from "./components/BottomNav";
 import { HabitProvider, HabitContext } from "./context/HabitContext";
 import { useAuth } from "./auth/AuthContext";
@@ -67,6 +69,10 @@ function AppContent() {
         return <DayDetails goalId={screen.goalId} date={screen.date} setScreen={setScreen} />;
       case "account":
         return <Account />;
+      case "pomodoro":
+        return <PomodoroTimer />;
+      case "water":
+        return <WaterTracker />;
       default:
         return <Tracker selectedGoal={selectedGoal} setSelectedGoal={setSelectedGoal} />;
     }
